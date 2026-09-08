@@ -1,0 +1,83 @@
+const terminalSuccess = new Set(['completed', 'succeeded', 'success']);
+const terminalFailure = new Set(['failed', 'error', 'cancelled', 'canceled']);
+const kieTerminalSuccess = new Set(['success']);
+const kieTerminalFailure = new Set(['fail']);
+
+export function createSeedanceClient({ baseUrl, apiKey, createPath = '/v1/videos/generations', statusPath = '/v1/videos/generations/{id}', pollIntervalMs = 5000, requestTimeoutMs = 30000, fetchImpl = fetch }) {
+  if (!baseUrl || !apiKey) throw new Error('SEEDANCE_API_BASE_URL and SEEDANCE_API_KEY are required for live mode.');
+  async function request(url, options, { timeoutMs = requestTimeoutMs, signal } = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error(`HTTP request timed out after ${timeoutMs}ms.`)), timeoutMs);
+    const onAbort = () => controller.abort(signal.reason);
+    signal?.addEventListener('abort', onAbort, { once: true });
+    try {
+      const response = await fetchImpl(url, { ...options, signal: controller.signal });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(`Seedance API ${response.status}: ${JSON.stringify(body)}`);
+      return body;
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', onAbort); }
+  }
+  return {
+    create(payload) {
+      return request(new URL(createPath, baseUrl), {
+        method: 'POST',
+        headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    },
+    async waitForCompletion(taskId, { timeoutMs } = {}) {
+      const deadline = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Date.now() + timeoutMs : null;
+      while (true) {
+        if (deadline && Date.now() >= deadline) throw new Error(`Polling timed out after ${timeoutMs}ms for task ${taskId}.`);
+        const remaining = deadline ? Math.min(requestTimeoutMs, Math.max(1, deadline - Date.now())) : requestTimeoutMs;
+        const result = await request(new URL(statusPath.replace('{id}', encodeURIComponent(taskId)), baseUrl), { headers: { authorization: `Bearer ${apiKey}` } }, { timeoutMs: remaining });
+        const status = String(result.status ?? result.data?.status ?? '').toLowerCase();
+        if (terminalSuccess.has(status) || terminalFailure.has(status)) return result;
+        if (deadline && Date.now() >= deadline) throw new Error(`Polling timed out after ${timeoutMs}ms for task ${taskId}.`);
+        await sleep(Math.min(pollIntervalMs, Math.max(1, deadline ? deadline - Date.now() : pollIntervalMs)));
+      }
+    }
+  };
+}
+
+export function createKieClient({ apiKey, baseUrl = 'https://api.kie.ai/', pollIntervalMs = 5000, requestTimeoutMs = 30000, fetchImpl = fetch }) {
+  if (!apiKey) throw new Error('KIE_API_KEY is required for live mode.');
+  async function request(url, options, { timeoutMs = requestTimeoutMs, signal } = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error(`HTTP request timed out after ${timeoutMs}ms.`)), timeoutMs);
+    const onAbort = () => controller.abort(signal.reason);
+    signal?.addEventListener('abort', onAbort, { once: true });
+    try {
+      const response = await fetchImpl(url, { ...options, signal: controller.signal });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || (body.code !== undefined && body.code !== 200)) throw new Error(`Kie API ${response.status}: ${JSON.stringify(body)}`);
+      return body;
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', onAbort); }
+  }
+  const headers = { authorization: `Bearer ${apiKey}` };
+  return {
+    create(payload) {
+      return request(new URL('/api/v1/jobs/createTask', baseUrl), {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    },
+    async waitForCompletion(taskId, { timeoutMs } = {}) {
+      const deadline = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Date.now() + timeoutMs : null;
+      while (true) {
+        const url = new URL('/api/v1/jobs/recordInfo', baseUrl);
+        url.searchParams.set('taskId', taskId);
+        if (deadline && Date.now() >= deadline) throw new Error(`Polling timed out after ${timeoutMs}ms for task ${taskId}.`);
+        const remaining = deadline ? Math.min(requestTimeoutMs, Math.max(1, deadline - Date.now())) : requestTimeoutMs;
+        const result = await request(url, { headers }, { timeoutMs: remaining });
+        const state = String(result.data?.state ?? '').toLowerCase();
+        if (kieTerminalSuccess.has(state) || kieTerminalFailure.has(state)) return result;
+        if (deadline && Date.now() >= deadline) throw new Error(`Polling timed out after ${timeoutMs}ms for task ${taskId}.`);
+        await sleep(Math.min(pollIntervalMs, Math.max(1, deadline ? deadline - Date.now() : pollIntervalMs)));
+      }
+    }
+  };
+}
+
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }

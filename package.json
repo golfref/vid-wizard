@@ -1,0 +1,16 @@
+{
+  "name": "vidwizard-poc",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "poc:validate": "node poc/src/cli.js validate --manifest poc/config/test-manifest.example.json",
+    "poc:dry-run": "node poc/src/cli.js run --manifest poc/config/test-manifest.example.json --mode dry-run",
+    "poc:report": "node poc/src/cli.js report --runs-dir poc/runs",
+    "poc:shot-plan": "node poc/src/cli.js plan --manifest poc/config/solo-shot-test.json",
+    "poc:shot-prepare": "node poc/src/cli.js prepare --manifest poc/config/solo-shot-test.json"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "pocName": "vidwizard-full-person-replacement-round-1",
+  "model": "bytedance/seedance-2-5",
+  "resolution": "480p",
+  "aspectRatio": "16:9",
+  "durationSeconds": 5,
+  "runs": [
+    {
+      "id": "solo-01",
+      "templateId": "ride-through-new-york",
+      "slotCount": 1,
+      "templateVideoUrl": "https://replace-with-public-url.example/ride-template.mp4",
+      "references": [
+        {
+          "slot": 1,
+          "imageUrl": "https://replace-with-public-url.example/user-a-full-body.jpg"
+        }
+      ],
+      "prompt": "Replace the entire person in the video with the person from reference image 1. Preserve the original background, camera motion, action, pose, timing, and story of the template video."
+    },
+    {
+      "id": "couple-01",
+      "templateId": "couple-romance",
+      "slotCount": 2,
+      "templateVideoUrl": "https://replace-with-public-url.example/couple-template.mp4",
+      "references": [
+        {
+          "slot": 1,
+          "imageUrl": "https://replace-with-public-url.example/user-a-full-body.jpg"
+        },
+        {
+          "slot": 2,
+          "imageUrl": "https://replace-with-public-url.example/user-b-full-body.jpg"
+        }
+      ],
+      "prompt": "There are two people in the video. Replace character slot 1 with reference image 1 and character slot 2 with reference image 2. Preserve each character's original position, action, pose, timing, background, and camera motion."
+    },
+    {
+      "id": "group-01",
+      "templateId": "friends-group-scene",
+      "slotCount": 3,
+      "templateVideoUrl": "https://replace-with-public-url.example/group-template.mp4",
+      "references": [
+        {
+          "slot": 1,
+          "imageUrl": "https://replace-with-public-url.example/user-a-full-body.jpg"
+        },
+        {
+          "slot": 2,
+          "imageUrl": "https://replace-with-public-url.example/user-b-full-body.jpg"
+        },
+        {
+          "slot": 3,
+          "imageUrl": "https://replace-with-public-url.example/user-c-full-body.jpg"
+        }
+      ],
+      "prompt": "There are three people in the video. Replace character slots 1, 2, and 3 with reference images 1, 2, and 3 respectively. Preserve each character's original position, action, pose, timing, background, and camera motion."
+    }
+  ]
+}

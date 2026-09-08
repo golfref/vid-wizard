@@ -1,0 +1,22 @@
+{
+  "pocName": "solo-shot-poc",
+  "model": "bytedance/seedance-2-5",
+  "resolution": "480p",
+  "aspectRatio": "16:9",
+  "providerDurationSeconds": null,
+  "reference": {
+    "slot": 1,
+    "imageUrl": "https://replace-with-public-url.example/user-full-body.jpg"
+  },
+  "template": {
+    "id": "horse-riding",
+    "localVideoPath": "/absolute/path/to/template.mp4",
+    "basePrompt": "Replace the entire visible person with the person from reference image 1. Preserve the horse, background, action, pose, framing, camera motion, timing, and lighting.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": []
+  }
+}

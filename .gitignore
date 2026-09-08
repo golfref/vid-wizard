@@ -1,0 +1,6 @@
+node_modules/
+.venv/
+.env
+poc/runs/
+poc/assets/
+!poc/assets/.gitkeep
