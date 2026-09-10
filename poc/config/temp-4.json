@@ -1,0 +1,33 @@
+{
+  "pocName": "snaptik-template-poc",
+  "model": "bytedance/seedance-2-fast",
+  "resolution": "480p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": null,
+  "reference": {
+    "slot": 1,
+    "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4.jpg"
+  },
+  "promptGeneration": {
+    "enabled": false,
+    "sourceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4.mp4"
+  },
+  "template": {
+    "id": "temp-4",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/snaptik-cuts/temp_4.mp4",
+    "basePrompt": "Replace the entire visible woman with the exact adult woman from reference image slot 1. The reference woman must be the only person in every frame: use her face, dark wavy hair, eyebrows, eyes, nose, smile, red lipstick, skin tone, body appearance, and red long-sleeve top. Preserve only the reference video's action, playful face-distortion animation, timing, camera movement and framing, restaurant, Buddha sculpture, dining table, food, and all other non-person elements. Do not preserve the reference video's original subject. Do not add people, text, logos, cuts, zooms, or new effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 5,
+        "publicVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4.mp4"
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "pocName": "two-character-shot-poc",
+  "model": "bytedance/seedance-2-fast",
+  "resolution": "480p",
+  "aspectRatio": "16:9",
+  "providerDurationSeconds": null,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/char_1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/char_2.jpg"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2slots-temp-1-swapped",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/2slots/temp_1.mp4",
+    "basePrompt": "Fully replace both main fighters with the exact people in the reference images. Fighter A, who starts on the left, must use only reference image slot 2. Fighter B, who starts on the right, must use only reference image slot 1. For each fighter, replace the entire person: face, hairstyle, body appearance, and clothing. No face, hair, clothing, or identity from either original fighter may remain. Keep each reference identity stable in every frame, including close-ups, motion blur, and occlusion; never swap the fighters. Preserve only the fight choreography, physical interaction, timing, camera, restaurant, and background spectators. Do not alter background spectators or add people, text, cuts, or effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": []
+  }
+}

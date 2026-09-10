@@ -1,0 +1,33 @@
+{
+  "pocName": "snaptik-template-poc",
+  "model": "bytedance/seedance-2-fast",
+  "resolution": "480p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": null,
+  "reference": {
+    "slot": 1,
+    "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_1.jpg"
+  },
+  "promptGeneration": {
+    "enabled": false,
+    "sourceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_1.mp4"
+  },
+  "template": {
+    "id": "temp-1",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/snaptik-cuts/temp_1.mp4",
+    "basePrompt": "Replace only the visible woman with the person from reference image slot 1. Preserve this exact action sequence: she throws a rope out through the open window toward the glowing golden sun outside, hooks the sun with the rope, pulls the sun through the window into the house, then runs to the silver refrigerator, opens its white door, and places the sun inside. Preserve the rope, sun, open window, exterior sky, indoor room, refrigerator and its interior shelves, the woman's throwing, pulling, running and placing motion, vertical 9:16 framing, warm light, camera angle, camera movement, and exact 4.5-second timing. Do not change the action order, props, setting, lighting, camera, motion, composition, or timing. Do not add people, text, logos, cuts, zooms, or new effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 4.5,
+        "publicVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_1.mp4"
+      }
+    ]
+  }
+}

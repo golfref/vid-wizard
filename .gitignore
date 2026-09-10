@@ -1,6 +1,8 @@
 node_modules/
 .venv/
 .env
+.env.*
+!.env.example
 poc/runs/
 poc/assets/
 !poc/assets/.gitkeep

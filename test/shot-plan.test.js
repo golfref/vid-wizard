@@ -72,6 +72,22 @@ test('builds a one-slot Kie request for a public shot', () => {
   assert.equal(payload.input.prompt, 'Replace the entire person and preserve the horse. Keep the rider seated.');
 });
 
+test('builds a two-slot Kie request in slot order', () => {
+  const twoSlotManifest = structuredClone(manifest);
+  delete twoSlotManifest.reference;
+  twoSlotManifest.references = [
+    { slot: 1, imageUrl: 'https://assets.example/fighter-a.jpg' },
+    { slot: 2, imageUrl: 'https://assets.example/fighter-b.jpg' }
+  ];
+  const shot = { id: 'shot-001', startSeconds: 0, endSeconds: 15, publicVideoUrl: 'https://assets.example/fight.mp4' };
+
+  assert.deepEqual(buildShotKiePayload(twoSlotManifest, shot).input.reference_image_urls, [
+    'https://assets.example/fighter-a.jpg',
+    'https://assets.example/fighter-b.jpg'
+  ]);
+  assert.deepEqual(validateShotManifest(twoSlotManifest), []);
+});
+
 test('rejects a mutated saved plan using its immutable hash', () => {
   const plan = resolveShotPlan(manifest, [{ startSeconds: 0, endSeconds: 5 }], { sourceDuration: 5 });
   plan.shots[0].endSeconds = 4;

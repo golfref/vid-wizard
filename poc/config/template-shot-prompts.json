@@ -1,0 +1,44 @@
+{
+  "promptVersion": 1,
+  "purpose": "Manual Seedance benchmark prompts; promptGeneration is deliberately disabled while Kie GPT is unavailable.",
+  "templates": [
+    {
+      "templateId": "temp-1",
+      "referenceImageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_1.jpg",
+      "referenceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_1.mp4",
+      "durationSeconds": 4.5,
+      "prompt": "Replace only the visible woman with the person from reference image slot 1. Preserve this exact action sequence: she throws a rope out through the open window toward the glowing golden sun outside, hooks the sun with the rope, pulls the sun through the window into the house, then runs to the silver refrigerator, opens its white door, and places the sun inside. Preserve the rope, sun, open window, exterior sky, indoor room, refrigerator and its interior shelves, the woman's throwing, pulling, running and placing motion, vertical 9:16 framing, warm light, camera angle, camera movement, and exact 4.5-second timing. Do not change the action order, props, setting, lighting, camera, motion, composition, or timing. Do not add people, text, logos, cuts, zooms, or new effects."
+    },
+    {
+      "templateId": "temp-2",
+      "referenceImageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_2.jpg",
+      "referenceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_2.mp4",
+      "durationSeconds": 5.8,
+      "prompt": "Replace only the visible acrobat with the person from reference image slot 1. Preserve the narrow bamboo pole over the lake, the crowd, boats, mountain landscape, blue sky, bright sun, the acrobat's balanced starting pose, full backward flip, airborne rotation, landing and celebratory finish, vertical 9:16 framing, wide camera view, camera motion, sunlight, and exact 5.8-second timing. Do not change the pole, lake, crowd, boats, mountains, lighting, camera, motion, composition, or timing. Do not add people, text, logos, cuts, zooms, or new effects."
+    },
+    {
+      "templateId": "temp-3",
+      "referenceImageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_3.jpg",
+      "referenceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_3.mp4",
+      "durationSeconds": 7,
+      "prompt": "Replace only the visible woman with the person from reference image slot 1. Preserve the fitted red áo dài, the small Vietnamese flag, the large red Vietnamese flag with yellow star behind her, outdoor daylight setting, the woman's calm standing pose, flag-holding gesture, editorial portrait framing, decorative white and red graphic wipe transitions, vertical 9:16 composition, camera framing, camera movement, lighting, and exact 7-second timing. Do not change the áo dài, flags, graphic transitions, setting, lighting, camera, motion, composition, or timing. Do not add people, text, logos, cuts, zooms, or new effects."
+    },
+    {
+      "templateId": "temp-4",
+      "referenceImageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4.jpg",
+      "referenceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4.mp4",
+      "durationSeconds": 5,
+      "prompt": "Replace the entire visible woman with the exact adult woman from reference image slot 1. The reference woman must be the only person in every frame: use her face, dark wavy hair, eyebrows, eyes, nose, smile, red lipstick, skin tone, body appearance, and red long-sleeve top. Preserve only the reference video's action, playful face-distortion animation, timing, camera movement and framing, restaurant, Buddha sculpture, dining table, food, and all other non-person elements. Do not preserve the reference video's original subject. Do not add people, text, logos, cuts, zooms, or new effects."
+    },
+    {
+      "templateId": "2lots-normal",
+      "referenceImageUrls": [
+        "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char1.jpg",
+        "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char2.jpg"
+      ],
+      "referenceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal.mp4",
+      "durationSeconds": 15,
+      "prompt": "Replace both visible performers with the exact adults from the reference images: slot 1 is the smiling man in the patterned shirt and cap; slot 2 is the man with curly hair, tinted round glasses, tan overshirt, and white trousers. Replace each entire person—face, hair, body, and clothing—so none of the template identities remain. Keep slot 1 and slot 2 attached to the same performers in every frame. Preserve the exact cinematic movement routine: mirrored hand blocks, turns, flowing arm gestures, coordinated footwork, close-ups, and ending pose. Preserve the outdoor courtyard, tiled roof, trees, daylight, shallow depth of field, camera angles and motion, vertical 9:16 framing, and exact 15-second timing. Keep the action theatrical and non-injurious; no weapons, blood, or realistic harm. Do not add people, text, logos, cuts, or new effects."
+    }
+  ]
+}

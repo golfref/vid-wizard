@@ -14,7 +14,7 @@ python -m pip install --upgrade pip
 python -m pip install "scenedetect[opencv]"
 ```
 
-Mỗi terminal mới cần chạy lại `source .venv/bin/activate` trước khi dùng các lệnh POC để `scenedetect` có trong `PATH`. `ffmpeg`/`ffprobe` dùng để cắt và nối; PySceneDetect AdaptiveDetector tìm điểm cut. Kie chỉ nhận URL HTTPS công khai, video local được giữ lại để detect/cut, kiểm tra duration và khôi phục audio khi assemble.
+CLI tự thêm `.venv/bin` vào `PATH` khi thư mục này tồn tại, nên không cần kích hoạt virtual environment riêng trước khi chạy lệnh POC. `ffmpeg`/`ffprobe` dùng để cắt và nối; PySceneDetect AdaptiveDetector tìm điểm cut. Kie chỉ nhận URL HTTPS công khai, video local được giữ lại để detect/cut, kiểm tra duration và khôi phục audio khi assemble. Tạo `.env` từ `.env.example`; CLI tự nạp file này và không đưa API key vào Git.
 
 ### 1. Tạo manifest
 
@@ -24,13 +24,15 @@ cp poc/config/solo-shot-test.example.json poc/config/solo-shot-test.json
 
 Điền `template.localVideoPath` bằng đường dẫn MP4 local và `reference.imageUrl` bằng ảnh full-body có consent ở URL HTTPS public. Để `template.shots` là `[]` để tự detect; chỉ điền shots khi muốn override các điểm cắt. `providerDurationSeconds` để `null` sẽ gửi duration đúng bằng duration shot; chỉ đặt giá trị khác khi đã xác nhận contract duration của provider.
 
-### 2. Detect và cắt shot (không dùng Kie credit)
+### 2. Detect, cắt shot và sinh prompt riêng
 
 ```bash
 npm run poc:shot-prepare
 ```
 
 Lệnh tạo `poc/assets/<template-id>/shots/*.mp4` và `poc/assets/<template-id>/shot-plan.json`. Chỉnh `adaptiveThreshold`/`minShotDurationSeconds` hoặc thêm manual shots trong manifest nếu điểm cắt chưa hợp lý.
+
+Để sinh prompt bằng Kie GPT-5.6 Luna, bật `promptGeneration.enabled` trong manifest và cung cấp `sourceVideoUrl` HTTPS công khai (hoặc `shotVideoUrls` theo từng shot). `prepare` đưa URL MP4 vào Kie File Upload API, sau đó truyền file tạm cho GPT phân tích toàn bộ video; không tạo frame ảnh. Plan lưu `promptSuffix`, `negativePrompt` và metadata vào plan trước dry-run. Upload file không dùng credit, nhưng GPT dùng credit; file của Kie là tạm thời nên chỉ dùng để sinh prompt.
 
 ### 3. Upload clips và thêm public URL
 
@@ -45,7 +47,7 @@ export KIE_API_KEY='...'
 node poc/src/cli.js run-shots --manifest poc/config/solo-shot-test.json --plan poc/assets/horse-riding/shot-plan.json --mode live
 ```
 
-Live mode sẽ fail trước khi tạo task đầu tiên nếu bất kỳ shot nào thiếu `publicVideoUrl`. Mỗi shot được lưu checkpoint trước khi submit, ngay sau khi nhận task ID, và khi polling kết thúc. Nếu mất mạng sau submit hoặc timeout, record chuyển sang `unknown` để reconcile; resume bằng `--resume-dir` sẽ poll lại task đã biết và không tự tạo task trả phí mới. Intent không có task ID phải được xử lý thủ công trước khi chạy lại.
+Dry-run có thể chạy trước khi upload shot; record sẽ lưu `local_reference_video_path` và đánh dấu `uploadRequiredBeforeLive`. Live mode sẽ fail trước khi tạo task đầu tiên nếu bất kỳ shot nào thiếu `publicVideoUrl`. Mỗi shot được lưu checkpoint trước khi submit, ngay sau khi nhận task ID, và khi polling kết thúc. Nếu mất mạng sau submit hoặc timeout, record chuyển sang `unknown` để reconcile; resume bằng `--resume-dir` sẽ poll lại task đã biết và không tự tạo task trả phí mới. Intent không có task ID phải được xử lý thủ công trước khi chạy lại.
 
 Plan được lưu với `planVersion` và `planHash`. Khi resume, hash và thứ tự shot phải khớp snapshot generation đã lưu; sửa plan giữa chừng sẽ bị từ chối.
 

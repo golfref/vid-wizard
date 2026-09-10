@@ -10,8 +10,12 @@ export function validateShotManifest(manifest) {
   else if (!SAFE_ID.test(String(manifest.template.id))) errors.push('template.id is not a safe id.');
   if (!manifest?.template?.localVideoPath) errors.push('template.localVideoPath is required.');
   if (!manifest?.template?.basePrompt?.trim()) errors.push('template.basePrompt is required.');
-  if (manifest?.reference?.slot !== 1) errors.push('reference.slot must be 1 for the one-slot POC.');
-  if (!isPublicHttpsUrl(manifest?.reference?.imageUrl)) errors.push('reference.imageUrl must be a public HTTPS URL.');
+  const references = getReferences(manifest);
+  if (!references.length || references.length > 3) errors.push('references must contain between 1 and 3 reference images.');
+  const expectedSlots = Array.from({ length: references.length }, (_, index) => index + 1);
+  const actualSlots = references.map((reference) => reference?.slot).sort((left, right) => left - right);
+  if (expectedSlots.join(',') !== actualSlots.join(',')) errors.push(`references must contain slots ${expectedSlots.join(', ')} exactly once.`);
+  for (const reference of references) if (!isPublicHttpsUrl(reference?.imageUrl)) errors.push(`reference slot ${reference?.slot ?? '?'} imageUrl must be a public HTTPS URL.`);
   const settings = manifest?.template?.sceneDetection;
   if (settings?.mode !== 'auto-with-override') errors.push('template.sceneDetection.mode must be auto-with-override.');
   if (!isPositiveNumber(settings?.minShotDurationSeconds)) errors.push('template.sceneDetection.minShotDurationSeconds must be positive.');
@@ -33,7 +37,7 @@ export function resolveShotPlan(manifest, detectedShots, { sourceDuration } = {}
     planVersion: 1,
     templateId: manifest.template.id,
     localVideoPath: manifest.template.localVideoPath,
-    reference: manifest.reference,
+    references: getReferences(manifest),
     basePrompt: manifest.template.basePrompt.trim(),
     sceneDetection: manifest.template.sceneDetection,
     sourceDurationSeconds: sourceDuration ?? manifest.template.sourceDurationSeconds ?? null,
@@ -60,7 +64,7 @@ export function validateSavedShotPlan(plan, manifest, { requireSourceDuration = 
   if (plan?.planVersion !== 1) errors.push('saved plan has unsupported planVersion.');
   if (plan?.templateId !== manifest?.template?.id) errors.push('saved plan templateId does not match manifest template.id.');
   if (plan?.localVideoPath && manifest?.template?.localVideoPath && path.resolve(plan.localVideoPath) !== path.resolve(manifest.template.localVideoPath)) errors.push('saved plan localVideoPath does not match manifest.');
-  if (stableJson(plan?.reference) !== stableJson(manifest?.reference)) errors.push('saved plan reference does not match manifest.');
+  if (stableJson(getPlanReferences(plan)) !== stableJson(getReferences(manifest))) errors.push('saved plan references do not match manifest.');
   if (String(plan?.basePrompt ?? '').trim() !== String(manifest?.template?.basePrompt ?? '').trim()) errors.push('saved plan basePrompt does not match manifest.');
   if (!plan?.planHash || plan.planHash !== hashPlan(plan)) errors.push('saved plan hash does not match its contents; regenerate the plan.');
   if (!Array.isArray(plan?.shots) || !plan.shots.length) errors.push('saved plan must contain at least one shot.');
@@ -71,19 +75,20 @@ export function validateSavedShotPlan(plan, manifest, { requireSourceDuration = 
 
 function stableJson(value) { if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`; if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`; return JSON.stringify(value); }
 
-export function buildShotPrompt(basePrompt, promptSuffix = '') {
-  return [basePrompt?.trim(), promptSuffix?.trim()].filter(Boolean).join(' ');
+export function buildShotPrompt(basePrompt, promptSuffix = '', negativePrompt = '') {
+  return [basePrompt?.trim(), promptSuffix?.trim(), negativePrompt?.trim() ? `Negative constraints: ${negativePrompt.trim()}` : ''].filter(Boolean).join(' ');
 }
 
 export function buildShotKiePayload(manifest, shot) {
   if (!isPublicHttpsUrl(shot?.publicVideoUrl) || isPlaceholderUrl(shot.publicVideoUrl)) {
     throw new Error(`${shot?.id ?? 'shot'}: publicVideoUrl must be a public HTTPS URL for Kie live generation.`);
   }
+  if (String(manifest.model ?? '').toLowerCase() === 'kling-3.0/video') return buildKling3Payload(manifest, shot);
   return {
     model: manifest.model ?? 'bytedance/seedance-2-5',
     input: {
-      prompt: buildShotPrompt(manifest.template.basePrompt, shot.promptSuffix),
-      reference_image_urls: [manifest.reference.imageUrl],
+      prompt: buildShotPrompt(manifest.template.basePrompt, shot.promptSuffix, shot.negativePrompt),
+      reference_image_urls: getReferences(manifest).map((reference) => reference.imageUrl),
       reference_video_urls: [shot.publicVideoUrl],
       generate_audio: false,
       return_last_frame: false,
@@ -99,6 +104,46 @@ export function buildShotKiePayload(manifest, shot) {
   };
 }
 
+export function buildKling3Payload(manifest, shot) {
+  const references = getReferences(manifest);
+  return {
+    model: manifest.model,
+    input: {
+      prompt: buildShotPrompt(manifest.template.basePrompt, shot.promptSuffix, shot.negativePrompt),
+      duration: shot.requestedDurationSeconds ?? manifest.providerDurationSeconds ?? (shot.endSeconds - shot.startSeconds),
+      aspect_ratio: manifest.aspectRatio ?? '16:9',
+      mode: manifest.kling?.mode ?? 'std',
+      multi_shots: false,
+      sound: manifest.kling?.sound ?? false,
+      kling_elements: [
+        ...references.map((reference) => ({
+          name: `char_${reference.slot}`,
+          description: `target character slot ${reference.slot}`,
+          // Kling validates 2–4 images per image element. The POC can opt into
+          // a duplicate URL when only one public reference is available.
+          element_input_urls: manifest.kling?.duplicateSingleReferenceImages
+            ? [reference.imageUrl, reference.imageUrl]
+            : [reference.imageUrl]
+        })),
+        {
+          name: 'template',
+          description: 'source choreography video',
+          element_input_urls: [shot.publicVideoUrl]
+        }
+      ]
+    }
+  };
+}
+
+export function getReferences(manifest) {
+  const references = Array.isArray(manifest?.references) ? manifest.references : manifest?.reference ? [manifest.reference] : [];
+  return references.map((reference) => ({ slot: Number(reference.slot), imageUrl: reference.imageUrl })).sort((left, right) => left.slot - right.slot);
+}
+
+function getPlanReferences(plan) {
+  return Array.isArray(plan?.references) ? plan.references : plan?.reference ? [plan.reference] : [];
+}
+
 export function isPublicHttpsUrl(value) {
   return typeof value === 'string' && PUBLIC_URL_PATTERN.test(value);
 }
@@ -110,6 +155,7 @@ function normaliseShots(shots) {
     startSeconds: Number(shot.startSeconds),
     endSeconds: Number(shot.endSeconds),
     promptSuffix: shot.promptSuffix ?? '',
+    negativePrompt: shot.negativePrompt ?? '',
     requestedDurationSeconds: shot.requestedDurationSeconds == null ? undefined : Number(shot.requestedDurationSeconds)
   }));
 }

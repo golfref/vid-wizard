@@ -1,0 +1,39 @@
+{
+  "pocName": "two-character-simple-seedance2",
+  "model": "bytedance/seedance-2",
+  "resolution": "720p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": 10,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-simple-char1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-simple-char2.png"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2lots-simple-seedance2",
+    "localVideoPath": "/tmp/2lots-simple.mp4",
+    "basePrompt": "Replace both visible women with the two reference people. Reference slot 1 is the woman in the gray knit top and beanie; reference slot 2 is the woman in the blue long-sleeve dress. Replace each entire person—face, hair, body appearance, and clothing—and remove all identity cues of the template women. Keep slot 1 and slot 2 attached to the same performers throughout the video, including when they move, overlap, or change positions. Preserve the exact dance choreography, gestures, timing, camera framing and movement, bright living-room background, lighting, and composition. Do not add people, text, logos, cuts, or effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 9.912993,
+        "promptSuffix": "",
+        "negativePrompt": ""
+      }
+    ]
+  }
+}

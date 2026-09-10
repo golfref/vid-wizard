@@ -1,0 +1,22 @@
+{
+  "pocName": "solo-shot-poc",
+  "model": "bytedance/seedance-2-fast",
+  "resolution": "480p",
+  "aspectRatio": "16:9",
+  "providerDurationSeconds": null,
+  "reference": {
+    "slot": 1,
+    "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/girl.jpg"
+  },
+  "template": {
+    "id": "horse-riding",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/istockphoto-595716624-640_epic-trailer-0-10s.mp4",
+    "basePrompt": "Replace only the visible rider with the person from reference image 1. Preserve the brown horse, saddle, reins, rider's seated riding position, left-to-right galloping motion, meadow, autumn forest and mountain background, wide side-view framing, camera movement, lighting, and exact timing. Do not change or replace the horse or environment. Do not add people, cuts, zooms, text, or logos.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": []
+  }
+}

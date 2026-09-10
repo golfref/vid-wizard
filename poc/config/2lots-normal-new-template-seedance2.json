@@ -1,0 +1,39 @@
+{
+  "pocName": "two-character-night-action-seedance2",
+  "model": "bytedance/seedance-2",
+  "resolution": "720p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": 15,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char2.jpg"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2lots-normal-new-template-seedance2",
+    "localVideoPath": "/tmp/2lots-normal-new-template.mp4",
+    "basePrompt": "Replace both visible performers with the exact adults from the reference images. Reference slot 1 replaces the performer who starts on the left; reference slot 2 replaces the performer who starts on the right. Replace each entire person—face, hair, body, and clothing—so no identity cue from either template performer remains. Keep slot 1 and slot 2 attached to the same performers in every frame, including movement, overlap, and close-up. Preserve the exact cinematic staged dance-action routine: opening wide two-person pose, coordinated arm blocks, controlled leg lifts and sweeps, turns, footwork, camera push-ins, and final close-up. Preserve the wet stone courtyard, tiled roof, Chinese-character wall, flowers, blue night lighting, reflections, camera angles and motion, vertical 9:16 framing, and source pacing. Keep all contact theatrical and harmless; no weapons, blood, injury, or realistic harm. Do not add people, text, logos, cuts, or new effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 14.048005,
+        "promptSuffix": "",
+        "negativePrompt": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "pocName": "two-character-shot-poc-seedance-2",
+  "model": "bytedance/seedance-2",
+  "resolution": "720p",
+  "aspectRatio": "16:9",
+  "providerDurationSeconds": 5,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4_2slots/char_1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4_2slots/char_2.jpg"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2slots-temp-1-seedance2-shot1",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/2slots/temp-1-kling-shot1/shot-001-1280x720.mp4",
+    "basePrompt": "Replace both lead performers with the exact people from the reference images. Reference slot 1 is the woman and reference slot 2 is the man. Replace each entire person, including face, hairstyle, body appearance, and clothing; do not retain either original fighter's identity. Keep slot 1 and slot 2 identities attached to the same performers throughout the shot, including movement, crossing, motion blur, and occlusion. Preserve only the original staged martial-arts choreography, physical interaction, timing, camera, restaurant, lighting, and background spectators. Do not alter spectators or add people, text, cuts, or effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "sourceDurationSeconds": 5.015011,
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 5.015011,
+        "promptSuffix": "",
+        "negativePrompt": ""
+      }
+    ]
+  }
+}

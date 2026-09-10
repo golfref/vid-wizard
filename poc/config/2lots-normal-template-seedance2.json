@@ -1,0 +1,39 @@
+{
+  "pocName": "two-character-cinematic-template-seedance2",
+  "model": "bytedance/seedance-2",
+  "resolution": "720p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": 15,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/2slots/2lots-normal-char2.jpg"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2lots-normal-template-seedance2",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/2slots/2lots-normal-template-9x16.mp4",
+    "basePrompt": "Replace both visible performers with the exact adults from the reference images: slot 1 is the smiling man in the patterned shirt and cap; slot 2 is the man with curly hair, tinted round glasses, tan overshirt, and white trousers. Replace each entire person—face, hair, body, and clothing—so none of the template identities remain. Keep slot 1 and slot 2 attached to the same performers in every frame. Preserve the exact cinematic movement routine: mirrored hand blocks, turns, flowing arm gestures, coordinated footwork, close-ups, and ending pose. Preserve the outdoor courtyard, tiled roof, trees, daylight, shallow depth of field, camera angles and motion, vertical 9:16 framing, and exact 15-second timing. Keep the action theatrical and non-injurious; no weapons, blood, or realistic harm. Do not add people, text, logos, cuts, or new effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 15,
+        "promptSuffix": "",
+        "negativePrompt": ""
+      }
+    ]
+  }
+}

@@ -2,8 +2,10 @@ import { mkdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 
-export async function assertVideoTools({ run = runProcess } = {}) {
-  for (const executable of ['scenedetect', 'ffmpeg', 'ffprobe']) {
+export async function assertVideoTools({ run = runProcess, requireSceneDetection = true } = {}) {
+  const executables = ['ffmpeg', 'ffprobe'];
+  if (requireSceneDetection) executables.unshift('scenedetect');
+  for (const executable of executables) {
     try {
       // PySceneDetect 0.6.x does not implement a --version flag, whereas
       // FFmpeg tools use -version. Its help command is a portable availability

@@ -32,3 +32,9 @@ test('checks PySceneDetect availability with its portable help command', async (
     { command: 'ffprobe', args: ['-version'] }
   ]);
 });
+
+test('does not require PySceneDetect for a manual shot plan', async () => {
+  const calls = [];
+  await assertVideoTools({ requireSceneDetection: false, run: async (command, args) => { calls.push([command, args]); } });
+  assert.deepEqual(calls.map(([command]) => command), ['ffmpeg', 'ffprobe']);
+});

@@ -1,0 +1,33 @@
+{
+  "pocName": "snaptik-template-poc",
+  "model": "bytedance/seedance-2",
+  "resolution": "480p",
+  "aspectRatio": "9:16",
+  "providerDurationSeconds": null,
+  "reference": {
+    "slot": 1,
+    "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_2.jpg"
+  },
+  "promptGeneration": {
+    "enabled": false,
+    "sourceVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_2.mp4"
+  },
+  "template": {
+    "id": "temp-2",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/snaptik-cuts/temp_2.mp4",
+    "basePrompt": "Replace only the visible acrobat with the person from reference image slot 1. Preserve this exact action sequence: the performer starts balanced on the narrow bamboo pole over the lake with both arms raised, bends and launches into one full backward flip above the pole and water, returns to the pole, then finishes upright with both arms raised. Preserve the narrow bamboo pole, lake, crowd watching from the shore and boats, green mountain landscape, blue sky, bright sun, vertical 9:16 framing, wide camera view, camera position, camera movement, daylight, and exact 5.8-second timing. Do not change the action order, pole, lake, crowd, boats, mountains, lighting, camera, motion, composition, or timing. Do not add people, text, logos, cuts, zooms, or new effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 5.8,
+        "publicVideoUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_2.mp4"
+      }
+    ]
+  }
+}

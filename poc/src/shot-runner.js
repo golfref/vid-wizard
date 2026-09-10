@@ -1,4 +1,4 @@
-import { buildShotKiePayload, isPublicHttpsUrl } from './shot-plan.js';
+import { buildKling3Payload, buildShotKiePayload, buildShotPrompt, getReferences, isPublicHttpsUrl } from './shot-plan.js';
 
 export async function runShots({ plan, manifest, mode, client = null, now = () => new Date().toISOString(), saveRecord = async () => {}, saveGeneration = async () => {}, existingRecords = [], pollTimeoutMs = 15 * 60 * 1000, generationId = `${plan.templateId}-${Date.now()}` }) {
   if (!['dry-run', 'live'].includes(mode)) throw new Error('mode must be dry-run or live.');
@@ -31,7 +31,34 @@ export async function runShots({ plan, manifest, mode, client = null, now = () =
 
 function buildDryRunRecord({ plan, manifest, shot, now, generationId }) {
   const startedAt = now();
-  return baseRecord({ plan, manifest, shot, startedAt, completedAt: now(), status: 'dry-run', generationId });
+  const request = buildDryRunRequest(manifest, shot);
+  return baseRecord({ plan, manifest, shot, startedAt, completedAt: now(), status: 'dry-run', generationId, request });
+}
+
+function buildDryRunRequest(manifest, shot) {
+  if (String(manifest.model ?? '').toLowerCase() === 'kling-3.0/video') {
+    const request = buildKling3Payload(manifest, shot);
+    return { ...request, dryRun: true, uploadRequiredBeforeLive: !shot.publicVideoUrl };
+  }
+  return {
+    model: manifest.model ?? 'bytedance/seedance-2-5',
+    input: {
+      prompt: buildShotPrompt(manifest.template.basePrompt, shot.promptSuffix, shot.negativePrompt),
+      reference_image_urls: getReferences(manifest).map((reference) => reference.imageUrl),
+      reference_video_urls: shot.publicVideoUrl ? [shot.publicVideoUrl] : [],
+      local_reference_video_path: shot.localVideoPath ?? null,
+      generate_audio: false,
+      return_last_frame: false,
+      resolution: manifest.resolution ?? '480p',
+      aspect_ratio: manifest.aspectRatio ?? '16:9',
+      duration: shot.requestedDurationSeconds ?? manifest.providerDurationSeconds ?? (shot.endSeconds - shot.startSeconds),
+      output_format: 'mp4',
+      web_search: false,
+      nsfw_checker: true
+    },
+    dryRun: true,
+    uploadRequiredBeforeLive: !shot.publicVideoUrl
+  };
 }
 
 async function buildLiveRecord({ plan, manifest, shot, client, now, saveRecord, existingRecords, pollTimeoutMs, generationId }) {
@@ -101,7 +128,7 @@ function baseRecord({ plan, manifest, shot, startedAt, completedAt, status, requ
     templateId: plan.templateId,
     generationId,
     shotId: shot.id,
-    slotCount: 1,
+    slotCount: getReferences(manifest).length,
     source: { startSeconds: shot.startSeconds, endSeconds: shot.endSeconds, durationSeconds: shot.endSeconds - shot.startSeconds },
     requestedDurationSeconds: shot.requestedDurationSeconds ?? manifest.providerDurationSeconds ?? (shot.endSeconds - shot.startSeconds),
     actualDurationSeconds: null,

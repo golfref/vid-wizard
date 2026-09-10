@@ -28,6 +28,32 @@ test('creates one dry-run record for each shot with the shared reference image',
   assert.equal(records[0].qualityReview, null);
 });
 
+test('writes a two-slot dry-run record with both reference images', async () => {
+  const twoSlotManifest = structuredClone(manifest);
+  delete twoSlotManifest.reference;
+  twoSlotManifest.references = [
+    { slot: 1, imageUrl: 'https://assets.example/fighter-a.jpg' },
+    { slot: 2, imageUrl: 'https://assets.example/fighter-b.jpg' }
+  ];
+  const twoSlotPlan = { ...plan, references: twoSlotManifest.references };
+  delete twoSlotPlan.reference;
+
+  const [record] = await runShots({ plan: twoSlotPlan, manifest: twoSlotManifest, mode: 'dry-run' });
+  assert.equal(record.slotCount, 2);
+  assert.deepEqual(record.request.input.reference_image_urls, [
+    'https://assets.example/fighter-a.jpg',
+    'https://assets.example/fighter-b.jpg'
+  ]);
+});
+
+test('dry-run accepts a prepared local shot before public upload', async () => {
+  const localPlan = { ...plan, shots: [{ ...plan.shots[0], publicVideoUrl: undefined, localVideoPath: '/tmp/shot-001.mp4' }] };
+  const [record] = await runShots({ plan: localPlan, manifest, mode: 'dry-run' });
+  assert.deepEqual(record.request.input.reference_video_urls, []);
+  assert.equal(record.request.input.local_reference_video_path, '/tmp/shot-001.mp4');
+  assert.equal(record.request.uploadRequiredBeforeLive, true);
+});
+
 test('refuses all live generation before creating a task when any shot lacks a public URL', async () => {
   const invalidPlan = structuredClone(plan);
   invalidPlan.shots[1].publicVideoUrl = '';

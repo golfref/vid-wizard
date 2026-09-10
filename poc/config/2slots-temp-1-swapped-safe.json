@@ -1,0 +1,47 @@
+{
+  "pocName": "two-character-martial-arts-poc",
+  "model": "bytedance/seedance-2-fast",
+  "resolution": "480p",
+  "aspectRatio": "16:9",
+  "providerDurationSeconds": null,
+  "references": [
+    {
+      "slot": 1,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4_2slots/char_1.jpg"
+    },
+    {
+      "slot": 2,
+      "imageUrl": "https://vidwizard.s3.us-east-1.amazonaws.com/temp_4_2slots/char_2.jpg"
+    }
+  ],
+  "promptGeneration": {
+    "enabled": false
+  },
+  "template": {
+    "id": "2slots-temp-1-swapped-safe",
+    "localVideoPath": "/home/ubuntu/projects/GOLFREF/vid-wizard/poc/assets/2slots/temp_1.mp4",
+    "basePrompt": "Replace the two lead performers with the exact people from the reference images. The lead performer starting on the left uses only slot 2; the lead performer starting on the right uses only slot 1. Replace each entire person and keep both identities stable without swapping. Preserve the same controlled, choreographed martial-arts demonstration: movement sequence, timing, camera, restaurant, and background spectators. This is staged performance with no weapons, blood, injuries, pain, or graphic harm. Do not alter spectators or add people, text, cuts, or effects.",
+    "sceneDetection": {
+      "mode": "auto-with-override",
+      "minShotDurationSeconds": 1,
+      "adaptiveThreshold": 3
+    },
+    "shots": [
+      {
+        "id": "shot-001",
+        "startSeconds": 0,
+        "endSeconds": 5
+      },
+      {
+        "id": "shot-002",
+        "startSeconds": 5,
+        "endSeconds": 10
+      },
+      {
+        "id": "shot-003",
+        "startSeconds": 10,
+        "endSeconds": 15
+      }
+    ]
+  }
+}

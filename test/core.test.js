@@ -4,7 +4,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildGenerationReport, buildKieTaskPayload, buildReport, buildSeedanceRequest, executeRun, readRecords, saveRecord, validateManifest } from '../poc/src/core.js';
-import { createKieClient } from '../poc/src/provider-client.js';
+import { createKieClient, retryTransient } from '../poc/src/provider-client.js';
 
 const validRun = {
   id: 'solo', templateId: 'solo-template', slotCount: 1,
@@ -78,6 +78,17 @@ test('Kie client submits a task and returns terminal task details', async () => 
   assert.equal(calls[0].options.headers.authorization, 'Bearer test-key');
   assert.equal(calls[1].url, 'https://api.kie.ai/api/v1/jobs/recordInfo?taskId=task_123');
   assert.equal(result.data.state, 'success');
+});
+
+test('retries transient failures five times with one-second gaps', async () => {
+  let calls = 0;
+  const delays = [];
+  await assert.rejects(
+    () => retryTransient(async () => { calls += 1; const error = new Error('maintenance'); error.transient = true; throw error; }, { sleepFn: async (ms) => delays.push(ms) }),
+    /maintenance/
+  );
+  assert.equal(calls, 5);
+  assert.deepEqual(delays, [1000, 1000, 1000, 1000]);
 });
 
 test('aborts a pending Kie status request at the polling deadline', async () => {

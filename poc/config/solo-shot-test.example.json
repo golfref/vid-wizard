@@ -8,6 +8,12 @@
     "slot": 1,
     "imageUrl": "https://replace-with-public-url.example/user-full-body.jpg"
   },
+  "promptGeneration": {
+    "enabled": false,
+    "model": "gpt-5-6-luna",
+    "reasoningEffort": "medium",
+    "sourceVideoUrl": "https://replace-with-public-url.example/template.mp4"
+  },
   "template": {
     "id": "horse-riding",
     "localVideoPath": "/absolute/path/to/template.mp4",

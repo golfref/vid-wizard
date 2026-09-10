@@ -4,13 +4,17 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { buildKieTaskPayload, buildGenerationReport, buildReport, executeRun, loadManifest, readFinalRecords, readGenerationRecords, readRecords, renderGenerationMarkdownReport, renderMarkdownReport, saveRecord, validateManifest } from './core.js';
 import { createKieClient } from './provider-client.js';
+import { createKiePromptClient } from './provider-client.js';
+import { generateShotPrompts } from './prompt-service.js';
 import { createReviewTemplate, assembleApprovedShots, validateFinalReview } from './review-service.js';
 import { detectScenes } from './scene-service.js';
 import { hashPlan, resolveShotPlan, validateBoundaries, validateSavedShotPlan, validateShotManifest } from './shot-plan.js';
 import { runShots } from './shot-runner.js';
 import { assertVideoTools, cutShots, probeMedia } from './video-service.js';
+import { configureProjectEnvironment } from './environment.js';
 
 const [command, ...args] = process.argv.slice(2);
+loadEnvironment();
 const options = parseArgs(args);
 const commands = new Set(['validate', 'run', 'report', 'plan', 'prepare', 'run-shots', 'review-template', 'assemble', 'final-review']);
 if (!commands.has(command)) die('Usage: node poc/src/cli.js <validate|run|report|plan|prepare|run-shots|review-template|assemble|final-review> [options]');
@@ -26,7 +30,7 @@ if (command === 'assemble') await assemble();
 if (command === 'final-review') await finalReview();
 
 async function validateLegacy() {
-  const manifest = await loadManifest(required('manifest'));
+  const manifest = applyPromptEnvironment(await loadManifest(required('manifest')));
   const errors = validateManifest(manifest, { allowPlaceholders: true });
   if (errors.length) die(errors.join('\n'));
   console.log(`Manifest valid: ${manifest.runs.length} test cases.`);
@@ -34,7 +38,7 @@ async function validateLegacy() {
 async function runLegacy() {
   const mode = options.mode ?? 'dry-run';
   if (options['resume-dir'] && mode !== 'live') die('Resume is only allowed in live mode to protect paid generation records.');
-  const manifest = await loadManifest(required('manifest'));
+  const manifest = applyPromptEnvironment(await loadManifest(required('manifest')));
   const errors = validateManifest(manifest, { allowPlaceholders: mode === 'dry-run' });
   if (errors.length) die(errors.join('\n'));
   const runDirectory = path.join(options['runs-dir'] ?? 'poc/runs', timestamp());
@@ -60,11 +64,13 @@ async function printPlan() {
 async function prepare() {
   const { plan } = await resolvePlanFromManifest({ detect: true, checkTools: true });
   const media = await probeMedia({ inputPath: plan.localVideoPath });
-  const manifest = await loadManifest(required('manifest'));
+  const manifest = applyPromptEnvironment(await loadManifest(required('manifest')));
   const validatedPlan = resolveShotPlan(manifest, plan.shots, { sourceDuration: media.durationSeconds });
   const outputDirectory = options['assets-dir'] ?? path.join('poc/assets', plan.templateId, 'shots');
   const outputs = await cutShots({ inputPath: validatedPlan.localVideoPath, shots: validatedPlan.shots, outputDirectory });
-  const preparedPlan = { ...validatedPlan, sourceMedia: media, shots: validatedPlan.shots.map((shot) => ({ ...shot, localVideoPath: outputs.find((output) => output.id === shot.id).localVideoPath })) };
+  let preparedPlan = { ...validatedPlan, sourceMedia: media, shots: validatedPlan.shots.map((shot) => ({ ...shot, localVideoPath: outputs.find((output) => output.id === shot.id).localVideoPath })) };
+  if (manifest.promptGeneration?.enabled) preparedPlan = await generateShotPrompts({ plan: preparedPlan, manifest, client: createPromptClient() });
+  preparedPlan.planHash = hashPlan(preparedPlan);
   const outputPath = options.output ?? path.join('poc/assets', plan.templateId, 'shot-plan.json');
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, JSON.stringify(preparedPlan, null, 2) + '\n');
@@ -73,7 +79,7 @@ async function prepare() {
 async function runShotGeneration() {
   const mode = options.mode ?? 'dry-run';
   if (options['resume-dir'] && mode !== 'live') die('Resume is only allowed in live mode to protect paid generation records.');
-  const manifest = await loadManifest(required('manifest'));
+  const manifest = applyPromptEnvironment(await loadManifest(required('manifest')));
   const errors = validateShotManifest(manifest);
   if (errors.length) die(errors.join('\n'));
   let plan = await loadRunPlan(manifest);
@@ -151,7 +157,7 @@ async function resolvePlanFromManifest({ detect, checkTools = false }) {
   const manifest = await loadManifest(required('manifest'));
   const errors = validateShotManifest(manifest);
   if (errors.length) die(errors.join('\n'));
-  if (checkTools) await assertVideoTools();
+  if (checkTools) await assertVideoTools({ requireSceneDetection: !manifest.template.shots?.length });
   const detectedShots = manifest.template.shots?.length || !detect ? [] : await detectScenes({ inputPath: manifest.template.localVideoPath, adaptiveThreshold: manifest.template.sceneDetection.adaptiveThreshold, minShotDurationSeconds: manifest.template.sceneDetection.minShotDurationSeconds });
   const sourceDuration = checkTools ? (await probeMedia({ inputPath: manifest.template.localVideoPath })).durationSeconds : undefined;
   return { manifest, plan: resolveShotPlan(manifest, detectedShots, { sourceDuration }) };
@@ -172,6 +178,22 @@ function mergeReviews(records, reviews) {
 }
 function createClient() {
   return createKieClient({ apiKey: process.env.KIE_API_KEY, baseUrl: process.env.KIE_API_BASE_URL, pollIntervalMs: Number(process.env.KIE_POLL_INTERVAL_MS ?? 5000) });
+}
+function createPromptClient() { return createKiePromptClient({ apiKey: process.env.KIE_API_KEY, baseUrl: process.env.KIE_API_BASE_URL, requestTimeoutMs: Number(process.env.KIE_PROMPT_TIMEOUT_MS ?? 90000) }); }
+function applyPromptEnvironment(manifest) {
+  if (!manifest.promptGeneration?.enabled) return manifest;
+  return {
+    ...manifest,
+    promptGeneration: {
+      ...manifest.promptGeneration,
+      model: process.env.KIE_PROMPT_MODEL ?? manifest.promptGeneration.model ?? 'gpt-5-6-luna',
+      reasoningEffort: process.env.KIE_PROMPT_REASONING_EFFORT ?? manifest.promptGeneration.reasoningEffort ?? 'medium'
+    }
+  };
+}
+function loadEnvironment() {
+  try { process.loadEnvFile('.env'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  configureProjectEnvironment();
 }
 function parseArgs(list) { const values = {}; for (let index = 0; index < list.length; index += 2) { const key = list[index]; if (!key?.startsWith('--')) die(`Unknown argument: ${key}`); values[key.slice(2)] = list[index + 1]; } return values; }
 function stableJson(value) { if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`; if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`; return JSON.stringify(value); }

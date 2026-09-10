@@ -80,4 +80,70 @@ export function createKieClient({ apiKey, baseUrl = 'https://api.kie.ai/', pollI
   };
 }
 
+export function createKiePromptClient({ apiKey, baseUrl = 'https://api.kie.ai/', requestTimeoutMs = 30000, fetchImpl = fetch }) {
+  if (!apiKey) throw new Error('KIE_API_KEY is required for prompt generation.');
+  return {
+    async uploadFromUrl({ sourceVideoUrl, fileName }) {
+      return retryTransient(async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+        try {
+          const response = await fetchImpl('https://kieai.redpandaai.co/api/file-url-upload', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+            body: JSON.stringify({ fileUrl: sourceVideoUrl, uploadPath: 'vidwizard/prompt-inputs', fileName }),
+            signal: controller.signal
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok || body.success === false || body.code !== 200) throw httpError(`Kie file upload ${response.status}: ${JSON.stringify(body)}`, response.status);
+          return body.data ?? {};
+        } catch (error) {
+          if (error.name === 'AbortError') throw transientError(`Kie file upload timed out after ${requestTimeoutMs}ms.`);
+          throw error;
+        } finally { clearTimeout(timer); }
+      });
+    },
+    async generate(payload) {
+      return retryTransient(async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+        try {
+          const response = await fetchImpl(new URL('/codex/v1/responses', baseUrl), {
+            method: 'POST',
+            headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json', accept: 'application/json' },
+            body: JSON.stringify(payload), signal: controller.signal
+          });
+          const text = await response.text();
+          if (!response.ok) throw httpError(`Kie prompt API ${response.status}: ${text}`, response.status);
+          return parseResponsePayload(text);
+        } catch (error) {
+          if (error.name === 'AbortError') throw transientError(`Kie prompt API timed out after ${requestTimeoutMs}ms.`);
+          throw error;
+        } finally { clearTimeout(timer); }
+      });
+    }
+  };
+}
+
+export async function retryTransient(operation, { attempts = 5, delayMs = 1000, sleepFn = sleep } = {}) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try { return await operation(); } catch (error) {
+      if (!error.transient || attempt === attempts) throw error;
+      await sleepFn(delayMs);
+    }
+  }
+}
+
+function httpError(message, status) { const error = new Error(message); error.transient = status === 429 || status >= 500; return error; }
+function transientError(message) { const error = new Error(message); error.transient = true; return error; }
+
+function parseResponsePayload(text) {
+  try { return JSON.parse(text); } catch {}
+  const events = text.split(/\n\n+/).map((event) => event.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('')).filter(Boolean);
+  const payloads = events.filter((event) => event !== '[DONE]').map((event) => JSON.parse(event));
+  const completed = payloads.findLast((payload) => Array.isArray(payload.output));
+  if (!completed) throw new Error('Kie prompt API returned an unreadable response.');
+  return completed;
+}
+
 function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
